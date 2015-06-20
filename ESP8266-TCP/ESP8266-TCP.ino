@@ -1,32 +1,37 @@
 #include <ESP8266WiFi.h>
+#include <WiFiServer.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
-#include <WiFiServer.h>
+#include <AsciiToString.h>
 
-/*=================== Variable WiFi ===================*/
+#define MAX_CLIENTS 1 // Telnet client 
+
+/*=== Variable WiFi ===*/
 const char* ssid = "OpenWrt_NAT_500GP.101";
 const char* password = "activegateway";
-const char* wifi_ip[11] = {"192","168","101","200"};
-const char* wifi_subnet[11] = {"255","255","255","0"};
-const char* wifi_gateway[11] = {"192","168","101","1"};
-/*=====================================================*/
+const char* wifi_ip[4] = {"192", "168", "101", "200"};
+const char* wifi_subnet[4] = {"255", "255", "255", "0"};
+const char* wifi_gateway[4] = {"192", "168", "101", "1"};
 
-/*=================  Variable WebServer ===============*/
+/*=== Variable WebServer ===*/
 String get_name;
 String get_value;
 String get_url;
-/*=====================================================*/
 
+uint8_t pin = 15;
+
+AsciiToString ascii_str;
 WiFiServer server_telnet(23);
+WiFiClient serverClients[MAX_CLIENTS];
+
 ESP8266WebServer server(80);
 
-void wifi_config(){
+void wifi_config() {
   WiFi.begin(ssid, password);
   WiFi.config(
-    IPAddress(atoi(wifi_ip[0]),atoi(wifi_ip[1]),atoi(wifi_ip[2]),atoi(wifi_ip[3])),
-    IPAddress(atoi(wifi_gateway[0]),atoi(wifi_gateway[1]),atoi(wifi_gateway[2]),atoi(wifi_gateway[3])),
-    IPAddress(atoi(wifi_subnet[0]),atoi(wifi_subnet[1]),atoi(wifi_subnet[2]),atoi(wifi_subnet[3]))
+    IPAddress(atoi(wifi_ip[0]), atoi(wifi_ip[1]), atoi(wifi_ip[2]), atoi(wifi_ip[3])),
+    IPAddress(atoi(wifi_gateway[0]), atoi(wifi_gateway[1]), atoi(wifi_gateway[2]), atoi(wifi_gateway[3])),
+    IPAddress(atoi(wifi_subnet[0]), atoi(wifi_subnet[1]), atoi(wifi_subnet[2]), atoi(wifi_subnet[3]))
   );
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
@@ -39,53 +44,85 @@ void wifi_config(){
   Serial.println(WiFi.localIP());
 }
 
-void telnet_server(){
+/*=== TELNET ===*/
+void telnet_server() {
+
+  uint8_t i;
   server_telnet.begin();
-  Serial.println("Telnet connection ");
-  
-  while (!server_telnet.available()) {
-    Serial.print(".");
-    delay(500);
+  server_telnet.setNoDelay(true);
+
+  if (server_telnet.hasClient()) {
+    for (i = 0; i < MAX_CLIENTS; i++) {
+      if (!serverClients[i].connected()) {
+        if (serverClients[i]) {
+          serverClients[i].stop();
+        }
+        serverClients[i] = server_telnet.available();
+        Serial.print("Telnet client id : ");
+        Serial.print(i);
+      }
+    }
+    Serial.println();
   }
-  
-  Serial.println();
-  Serial.println("have a new client");
 
-  
+  for (i = 0; i < MAX_CLIENTS; i++) {
+    if (serverClients[i].connected()) {
+      while (serverClients[i].available()) {
+        ascii_str.getString(serverClients[i].read());
+        if (ascii_str.message == "on") {
 
-}
+          Serial.println("TELNET : ON");
+          digitalWrite(pin, HIGH);
+          ascii_str.clear();
 
-void webserver_config(){
+        } else if (ascii_str.message == "off") {
+
+          Serial.println("TELNET : OFF");
+          digitalWrite(pin, LOW);
+          ascii_str.clear();
+
+        }
+      }
+    }
+  }
+
+}/*===== END TELNET =====*/
+
+void webserver_config() {
   server.on("/", webserver_display);
   server.begin();
   Serial.println("HTTP server started");
 }
 
 void webserver_display() {
-  server.send(200, "text/plain", "WAITING HTTP GET / TELNET TCP ...");
-}
-
-void setup(void){
-  Serial.begin(115200);
-  wifi_config();
-  webserver_config();
-  telnet_server();
-}
-
-void loop(void){
-  
-  server.handleClient();
-
+  server.send(200, "text/html", "WAITING HTTP GET / TELNET TCP ...");
   get_name = server.argName(0);
   get_value = server.arg(0);
   get_url = get_name;
-  get_url += " : ";
+  get_url += ":";
   get_url += get_value;
-  
-  if (get_url == "on : 1") {
-      Serial.println("work");
+
+  if (get_url == "on:1") {
+    digitalWrite(pin, HIGH);
+    Serial.println("HTTP GET : ON");
+  } else if (get_url == "off:0") {
+    digitalWrite(pin, LOW);
+    Serial.println("HTTP GET : OFF");
   }
-  
+}
+
+void setup(void) {
+  Serial.begin(115200);
+  pinMode(pin, OUTPUT);
+  wifi_config();
+  webserver_config();
+  //  telnet_server();
+}
+
+void loop(void) {
+
+  server.handleClient();
+  telnet_server();
   delay(500);
-  
-} 
+
+}
