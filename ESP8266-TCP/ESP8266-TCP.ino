@@ -7,11 +7,15 @@
 #define MAX_CLIENTS 1 // Telnet client 
 
 /*=== Variable WiFi ===*/
-const char* ssid = "OpenWrt_NAT_500GP.101";
-const char* password = "activegateway";
-const char* wifi_ip[4] = {"192", "168", "101", "200"};
+const char* ssid = "__Your__SSID__";
+const char* password = "__Your__SSID__";
+const char* wifi_ip[4] = {"192", "168", "0", "200"};
 const char* wifi_subnet[4] = {"255", "255", "255", "0"};
-const char* wifi_gateway[4] = {"192", "168", "101", "1"};
+const char* wifi_gateway[4] = {"192", "168", "0", "1"};
+
+/*=== WiFiAccessPoint ===*/
+const char* ssidAP = "__Your__WiFi__AP__";
+const char* ssidPass = "";
 
 /*=== Variable WebServer ===*/
 String get_name;
@@ -26,7 +30,7 @@ WiFiClient serverClients[MAX_CLIENTS];
 
 ESP8266WebServer server(80);
 
-void wifi_config() {
+void WiFi_Config() {
   WiFi.begin(ssid, password);
   WiFi.config(
     IPAddress(atoi(wifi_ip[0]), atoi(wifi_ip[1]), atoi(wifi_ip[2]), atoi(wifi_ip[3])),
@@ -88,7 +92,7 @@ void telnet_server() {
 
 }/*===== END TELNET =====*/
 
-void webserver_config() {
+void WebServer_Config() {
   server.on("/", webserver_display);
   server.begin();
   Serial.println("HTTP server started");
@@ -105,18 +109,33 @@ void webserver_display() {
   if (get_url == "on:1") {
     digitalWrite(pin, HIGH);
     Serial.println("HTTP GET : ON");
-  } else if (get_url == "off:0") {
+  } else if (get_url == "on:0") {
     digitalWrite(pin, LOW);
     Serial.println("HTTP GET : OFF");
   }
 }
 
+void WiFi_AP() {
+  WiFi.softAP(ssidAP);
+  Serial.print("WiFi AP : ");
+  Serial.print(ssidAP);
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println();
+  Serial.println("WiFi AP Success");
+  IPAddress myIP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(myIP);
+}
+
 void setup(void) {
   Serial.begin(115200);
   pinMode(pin, OUTPUT);
-  wifi_config();
-  webserver_config();
-  //  telnet_server();
+  WiFi_Config();
+  WiFi_AP();
+  WebServer_Config();
 }
 
 void loop(void) {
