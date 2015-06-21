@@ -12,6 +12,42 @@ void AsciiToString::getString(int ascii) {
                   this->word = ""; 
 
                 break;
+        case 32 : this->word += " "; break;
+        case 33 : this->word += "!"; break;
+        case 34 : this->word += '"'; break;
+        case 35 : this->word += "#"; break;
+        case 36 : this->word += "$"; break;
+        case 37 : this->word += "%"; break;
+        case 38 : this->word += "&"; break;
+        case 39 : this->word += "'"; break;
+        case 40 : this->word += "("; break;
+        case 41 : this->word += ")"; break;
+        case 42 : this->word += "*"; break;
+        case 43 : this->word += "+"; break;
+        case 44 : this->word += ","; break;
+        case 45 : this->word += "-"; break;
+        case 46 : this->word += "."; break;
+        case 47 : this->word += "/"; break;
+
+        case 48 : this->word += "0"; break;
+        case 49 : this->word += "1"; break;
+        case 50 : this->word += "2"; break;
+        case 51 : this->word += "3"; break;
+        case 52 : this->word += "4"; break;
+        case 53 : this->word += "5"; break;
+        case 54 : this->word += "6"; break;
+        case 55 : this->word += "7"; break;
+        case 56 : this->word += "8"; break;
+        case 57 : this->word += "9"; break;
+
+        case 58 : this->word += ":"; break;
+        case 59 : this->word += ";"; break;
+        case 60 : this->word += "<"; break;
+
+        case 61 : this->word += "="; break;
+        case 62 : this->word += ">"; break;
+        case 63 : this->word += "?"; break;
+        case 64 : this->word += "@"; break;
 
         case 65 : this->word += "A"; break;
         case 66 : this->word += "B"; break;
@@ -67,6 +103,10 @@ void AsciiToString::getString(int ascii) {
         case 121 : this->word += "y"; break;
         case 122 : this->word += "z"; break;
 
+        case 123 : this->word += "{"; break;
+        case 124 : this->word += "|"; break;
+        case 125 : this->word += "}"; break;
+        case 126 : this->word += "~"; break;
     }
 }
 
