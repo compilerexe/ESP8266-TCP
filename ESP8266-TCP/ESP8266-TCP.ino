@@ -4,7 +4,7 @@
 #include <ESP8266WebServer.h>
 #include <AsciiToString.h>
 
-#define MAX_CLIENTS 1 // Telnet client 
+#define MAX_CLIENTS 1 // MAX Telnet client
 
 /*=== Variable WiFi Static IP ===*/
 const char* ssid = "__Your__SSID__"; // Change your name wifi
@@ -78,30 +78,31 @@ void telnet_server() {
   for (i = 0; i < MAX_CLIENTS; i++) {
     if (serverClients[i].connected()) {
       while (serverClients[i].available()) {
+        
         ascii_str.getString(serverClients[i].read());
 
         /*=== funtion ascii_str.message you can set message for control ===*/
-        if (ascii_str.message == "relay1 : on") {
-
-          Serial.println("TELNET RELAY_1 : ON");
-          digitalWrite(pin_1, LOW);
-          ascii_str.clear();
-
-        } else if (ascii_str.message == "relay1 : off") {
+        if (ascii_str.message == "00") {
 
           Serial.println("TELNET RELAY_1 : OFF");
           digitalWrite(pin_1, HIGH);
           ascii_str.clear();
 
-        } else if (ascii_str.message == "relay2 : on") {
+        } else if (ascii_str.message == "01") {
 
-          Serial.println("TELNET RELAY_2 : ON");
-          digitalWrite(pin_2, LOW);
+          Serial.println("TELNET RELAY_1 : ON");
+          digitalWrite(pin_1, LOW);
           ascii_str.clear();
-        } else if (ascii_str.message == "relay2 : off") {
+
+        } else if (ascii_str.message == "10") {
+
+          Serial.println("TELNET RELAY_2 : OFF");
+          digitalWrite(pin_2, HIGH);
+          ascii_str.clear();
+        } else if (ascii_str.message == "11") {
   
-            Serial.println("TELNET RELAY_2 : OFF");
-            digitalWrite(pin_2, HIGH);
+            Serial.println("TELNET RELAY_2 : ON");
+            digitalWrite(pin_2, LOW);
             ascii_str.clear();
         }
         
@@ -112,12 +113,15 @@ void telnet_server() {
 }/*===== END TELNET =====*/
 
 void WebServer_Config() {
+  
   server.on("/", webserver_display);
   server.begin();
   Serial.println("HTTP server started");
+  
 }
 
 void webserver_display() {
+  
   server.send(200, "text/html", "WAITING HTTP GET / TELNET TCP ...");
   get_name = server.argName(0);
   get_value = server.arg(0);
@@ -125,33 +129,35 @@ void webserver_display() {
   get_url += ":";
   get_url += get_value;
 
-  if (get_url == "relay1:1") {
-    
-    digitalWrite(pin_1, LOW);
-    Serial.println("HTTP GET RELAY_1 : ON");
-    
-  } else if (get_url == "relay1:0") {
+  if (get_url == "relay:00") {
     
     digitalWrite(pin_1, HIGH);
     Serial.println("HTTP GET RELAY_1 : OFF");
     
-  } else if (get_url == "relay2:1") {
+  } else if (get_url == "relay:01") {
     
-    digitalWrite(pin_2, LOW);
-    Serial.println("HTTP GET RELAY_2 : ON");
+    digitalWrite(pin_1, LOW);
+    Serial.println("HTTP GET RELAY_1 : ON");
     
-  } else if (get_url == "relay2:0") {
+  } else if (get_url == "relay:10") {
     
     digitalWrite(pin_2, HIGH);
     Serial.println("HTTP GET RELAY_2 : OFF");
+    
+  } else if (get_url == "relay:11") {
+    
+    digitalWrite(pin_2, LOW);
+    Serial.println("HTTP GET RELAY_2 : ON");
     
   }
   
 }
 
 void WiFi_AP() {
+  
   WiFi.softAP(ssidAP);
-  /*=== If you need password wifi ===*/
+  
+  /*=== If you need password wifi remove comment ===*/
   //WiFi.softAP(ssidAP, ssidPass);
   
   Serial.print("WiFi AP : ");
@@ -161,20 +167,24 @@ void WiFi_AP() {
     Serial.print(".");
     delay(500);
   }
+  
   Serial.println();
   Serial.println("WiFi AP Success");
   IPAddress myIP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(myIP);
+  
 }
 
 void setup(void) {
+  
   Serial.begin(115200);
   pinMode(pin_1, OUTPUT);
   pinMode(pin_2, OUTPUT);
   WiFi_Config();
   WiFi_AP();
   WebServer_Config();
+  
 }
 
 void loop(void) {
