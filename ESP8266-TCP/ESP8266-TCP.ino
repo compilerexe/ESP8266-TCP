@@ -8,7 +8,7 @@
 
 /*=== Variable WiFi ===*/
 const char* ssid = "__Your__SSID__";
-const char* password = "__Your__SSID__";
+const char* password = "__Your__PASSWORD__";
 const char* wifi_ip[4] = {"192", "168", "0", "200"};
 const char* wifi_subnet[4] = {"255", "255", "255", "0"};
 const char* wifi_gateway[4] = {"192", "168", "0", "1"};
@@ -117,8 +117,12 @@ void webserver_display() {
 
 void WiFi_AP() {
   WiFi.softAP(ssidAP);
+  /*=== If you need password wifi ===*/
+  //WiFi.softAP(ssidAP, ssidPass);
+  
   Serial.print("WiFi AP : ");
   Serial.print(ssidAP);
+  
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(500);
